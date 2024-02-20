@@ -1,0 +1,21 @@
+apiVersion: "acid.zalan.do/v1"
+kind: postgresql
+metadata:
+  name: acid-minimal-cluster
+spec:
+  teamId: "acid"
+  volume:
+    size: 1Gi
+    storageClass: longhorn
+  numberOfInstances: {{ .Values.numberOfInstances }}
+#  users:
+#    testing:  # database owner
+#    - superuser
+#    - createdb
+#    foo_user: []  # role for application foo
+  databases:
+    testing: mmaton  # dbname: owner
+  preparedDatabases:
+    bar: {}
+  postgresql:
+    version: "15"

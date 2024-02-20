@@ -1,0 +1,17 @@
+local
+
+# Python
+**/*__pycache__
+**/*venv
+
+# IDEs
+.idea
+**/.pytest_cache
+**/.mypy_cache
+**/.venv
+public
+node_modules
+firebase-debug.log
+**/.DS_Store
+.vscode
+**.sql

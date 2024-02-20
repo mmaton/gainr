@@ -1,0 +1,86 @@
+repositories:
+  - name: zalando
+    url: git+https://github.com/zalando/postgres-operator@charts/postgres-operator?ref=v1.10.1
+  - name: influxdata
+    url: https://helm.influxdata.com/
+  - name: longhorn
+    url: https://charts.longhorn.io
+  - name: jetstack
+    url: https://charts.jetstack.io
+  - name: traefik
+    url: https://traefik.github.io/charts
+  - name: rancher-latest
+    url: https://releases.rancher.com/server-charts/latest
+
+environments:
+  default:
+    values:
+      - values.yaml
+
+---
+
+releases:
+  - name: traefik
+    chart: traefik/traefik
+
+  - name: certmanager
+    chart: jetstack/cert-manager
+    values:
+      - installCRDs: true
+
+  - name: letsencrypt-traefik
+    chart: ./letsencrypt-traefik
+
+  - name: rancher
+    chart: rancher-latest/rancher
+    namespace: cattle-system
+    installed: false  # Manually managed for now, requires updating Chart.yaml kubeVersion
+    values:
+      - hostname: rancher.k3s.mmaton.com
+        bootstrapPassword: admin
+        ingress.tls.source: letsEncrypt
+        letsEncrypt.email: me@mmaton.com
+        letsEncrypt.ingress.class: traefik
+
+  - name: longhorn
+    chart: longhorn/longhorn
+
+  - name: postgres-operator
+    chart: "zalando/postgres-operator"
+    namespace: postgres-operator
+    installed: {{.Values.installed.postgres | default false}}
+    cleanupOnFail: true
+    labels:
+      operator: true
+      tier: cluster
+    values:
+      - {{.Values | toYaml | nindent 16}}
+      - image: # Don't use this dude's own repo, he doesn't have arm64 builds
+          registry: ghcr.io
+          repository: zalando/postgres-operator
+
+  - name: postgres-deployment
+    chart: ./postgres
+    namespace: postgres
+    installed: {{.Values.installed.postgres | default false}}
+    cleanupOnFail: true
+    values:
+      - {{.Values | toYaml | nindent 16}}
+
+  - name: influxdb
+    chart: influxdata/influxdb2
+    namespace: influxdb
+    cleanupOnFail: true
+    values:
+      - {{.Values | toYaml | nindent 16}}
+      - ingress:
+          enabled: true
+          className: traefik
+          annotations:
+            cert-manager.io/cluster-issuer: letsencrypt-prod
+            traefik.ingress.kubernetes.io/router.entrypoints: "web, websecure"
+            traefik.ingress.kubernetes.io/router.tls: "true"
+            traefik.ingress.kubernetes.io/router.tls.certresolver: "letsencrypt-prod"
+          tls: true
+          hostname: influx.k3s.mmaton.com
+          secretName: tls-influx-ingress

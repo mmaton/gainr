@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "crypto-ingress"
+version = "0.1.0"
+description = ""
+authors = ["Max Maton <me@mmaton.com>"]
+readme = "README.md"
+
+[virtualenvs]
+in-project = true
+
+[tool.poetry.dependencies]
+python = ">=3.11,<=3.14"
+influxdb-client = "^1.40.0"
+python-kraken-sdk = "^2.1.1"
+environs = "^10.3.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

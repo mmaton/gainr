@@ -1,0 +1,238 @@
+apiVersion: elasticsearch.k8s.elastic.co/v1
+kind: Elasticsearch
+metadata:
+  name: prod
+  namespace: elastic
+spec:
+  auth: {}
+  http:
+    service:
+      metadata: {}
+      spec: {}
+    tls:
+      certificate: {}
+  monitoring:
+    logs: {}
+    metrics: {}
+  nodeSets:
+  - name: master-nodes
+    config:
+      node.roles: ["master"]
+      node.store.allow_mmap: false
+    count: 1
+    volumeClaimTemplates:
+      - metadata:
+          name: elasticsearch-data # Do not change this name unless you set up a volume mount for the data path.
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 5Gi
+          storageClassName: longhorn
+    podTemplate:
+      metadata:
+        creationTimestamp: null
+      spec:
+        containers:
+          - name: elasticsearch
+            resources:
+              requests:
+                memory: 2Gi
+                cpu: 80m
+              limits:
+                memory: 2Gi
+                cpu: 500m
+  - name: data-nodes
+    config:
+      node.roles: ["data", "ml"]
+      node.store.allow_mmap: false
+    count: 2
+    volumeClaimTemplates:
+    - metadata:
+        name: elasticsearch-data # Do not change this name unless you set up a volume mount for the data path.
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 5Gi
+        storageClassName: longhorn
+    podTemplate:
+      metadata:
+        creationTimestamp: null
+      spec:
+        containers:
+        - name: elasticsearch
+          resources:
+            requests:
+              memory: 4Gi
+              cpu: 250m
+            limits:
+              memory: 4Gi
+              cpu: 500m
+  transport:
+    service:
+      metadata: {}
+      spec: {}
+    tls:
+      certificate: {}
+      certificateAuthorities: {}
+  updateStrategy:
+    changeBudget: {}
+  version: 8.12.1
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: elasticsearch
+  namespace: elastic
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: "web, websecure"
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.tls.certresolver: "letsencrypt-prod"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: traefik
+  rules:
+  - host: elastic.k3s.mmaton.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: prod-es-http
+            port:
+              number: 9200
+        path: /
+        pathType: Prefix
+  tls:
+  - hosts:
+    - elastic.k3s.mmaton.com
+    secretName: tls-elastic-ingress
+
+---
+
+apiVersion: kibana.k8s.elastic.co/v1
+kind: Kibana
+metadata:
+  name: prod
+  namespace: elastic
+spec:
+  count: 1
+  elasticsearchRef:
+    name: prod
+  enterpriseSearchRef: {}
+  http:
+    service:
+      metadata: {}
+      spec:
+        type: ClusterIP
+    tls:
+      certificate: {}
+  monitoring:
+    logs: {}
+    metrics: {}
+  podTemplate:
+    metadata:
+      creationTimestamp: null
+  version: 8.12.1
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kibana-ui
+  namespace: elastic
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: "web, websecure"
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.tls.certresolver: "letsencrypt-prod"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: traefik
+  rules:
+  - host: kibana.k3s.mmaton.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: prod-kb-http
+            port:
+              number: 5601
+        path: /
+        pathType: Prefix
+  tls:
+  - hosts:
+    - kibana.k3s.mmaton.com
+    secretName: tls-kibana-ingress
+
+---
+
+apiVersion: apm.k8s.elastic.co/v1
+kind: ApmServer
+metadata:
+  name: prod
+  namespace: elastic
+spec:
+  count: 1
+  elasticsearchRef:
+    name: prod
+  http:
+    service:
+      metadata: {}
+      spec: {}
+    tls:
+      certificate: {}
+  kibanaRef:
+    name: prod
+  podTemplate:
+    metadata:
+      creationTimestamp: null
+    spec:
+      containers: null
+  version: 8.12.1
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: apm
+  namespace: elastic
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: "web, websecure"
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.tls.certresolver: "letsencrypt-prod"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: traefik
+  rules:
+  - host: apm.k3s.mmaton.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: prod-apm-http
+            port:
+              number: 8200
+        path: /
+        pathType: Prefix
+  tls:
+  - hosts:
+    - apm.k3s.mmaton.com
+    secretName: tls-apm-ingress
+
+---
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: eck-trial-license
+  namespace: elastic-system
+  labels:
+    license.k8s.elastic.co/type: enterprise_trial
+  annotations:
+    elastic.co/eula: accepted
