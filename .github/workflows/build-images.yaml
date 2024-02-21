@@ -19,7 +19,7 @@ jobs:
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }} # Provide GITHUB_TOKEN to login into the GitHub Packages
         image-name: crypto-ingress
-        image-tag: ${{ github.sha }}
-        additional-image-tags: ${{ github.ref }}.latest
+        image-tag: ${{ github.sha }}z
+        additional-image-tags: ${{ github.ref_name }}@latest
         build-context: applications/crypto-ingress
-        custom-args: --platform=linux/arm64,linux/amd64 --cache-from=ghcr.io/mmaton/infrastructure/crypto-ingress/${{ github.ref }}.latest --cache-from=ghcr.io/mmaton/infrastructure/crypto-ingress/main.latest
+        custom-args: --platform=linux/arm64,linux/amd64 --cache-from=ghcr.io/mmaton/infrastructure/crypto-ingress:feat-helmfile-deploy@latest
