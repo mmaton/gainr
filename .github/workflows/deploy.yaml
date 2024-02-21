@@ -20,6 +20,6 @@ jobs:
         env: # Or as an environment variable
           KUBECONFIG: ${{ secrets.KUBECONFIG }}
         with:
-          helmfile: helmfile apply --selector name=crypto-ingress --set image.tag="${{ GITHUB_SHA }}" --set influx.host="${{ secrets.influx_host }}" --set influx.token="${{ secrets.influx_token }}"
+          helmfile: helmfile apply --selector name=crypto-ingress --set image.tag="${{ github.sha }}" --set influx.host="${{ secrets.influx_host }}" --set influx.token="${{ secrets.influx_token }}"
           helmfile-config: helm/helmfile.yaml
           namespace: ${{ GITHUB_REF_NAME }}
