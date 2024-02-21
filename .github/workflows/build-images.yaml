@@ -1,5 +1,8 @@
 name: Build and publish images
 
+permissions:
+  packages: write
+
 on:
   push:
     branches: ["*"]
