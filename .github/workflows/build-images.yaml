@@ -22,4 +22,4 @@ jobs:
         image-tag: ${{ github.sha }}z
         additional-image-tags: ${{ github.ref_name }}
         build-context: applications/crypto-ingress
-        custom-args: --platform=linux/arm64,linux/amd64 --build-arg=cache-from=ghcr.io/mmaton/infrastructure/crypto-ingress:${{ github.ref_name }}
+        custom-args: --platform=linux/arm64,linux/amd64 --build-arg=cache-from="ghcr.io/mmaton/infrastructure/crypto-ingress:${{ github.ref_name }}"
