@@ -24,4 +24,4 @@ jobs:
         build-context: applications/crypto-ingress
         custom-args: --platform=linux/arm64,linux/amd64 --cache-from=ghcr.io/mmaton/infrastructure/crypto-ingress:${{ github.ref_name }}
   deploy:
-    uses: ./.github/workflows/deploy.yaml
+    uses: .github/workflows/deploy.yaml
