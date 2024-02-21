@@ -20,5 +20,6 @@ jobs:
         github-token: ${{ secrets.GITHUB_TOKEN }} # Provide GITHUB_TOKEN to login into the GitHub Packages
         image-name: crypto-ingress
         image-tag: ${{ github.sha }}
+        additional-image-tags: ${{ github.ref }}.latest
         build-context: applications/crypto-ingress
-        custom-args: --platform=linux/arm64,linux/amd64
+        custom-args: --platform=linux/arm64,linux/amd64 --cache-from=ghcr.io/mmaton/infrastructure/crypto-ingress/${{ github.ref }}.latest --cache-from=ghcr.io/mmaton/infrastructure/crypto-ingress/main.latest
