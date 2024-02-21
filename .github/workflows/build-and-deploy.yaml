@@ -42,6 +42,7 @@ jobs:
     env:
       KUBECONFIG: '${{ github.workspace }}/.kube/main-kubeconfig'
     runs-on: ubuntu-latest
+    needs: build-and-publish-latest
     steps:
       - uses: actions/checkout@main
 
