@@ -1,2 +1,2 @@
 cryptoIngress:
-  debug: False
+  debug: true

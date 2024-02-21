@@ -4,5 +4,5 @@
 - name: INFLUXDB_TOKEN
   value: {{ .Values.influx.token | quote }}
 - name: DEBUG
-  value: {{ .Values.cryptoIngress.debug }}
+  value: {{ .Values.cryptoIngress.debug | quote }}
 {{- end -}}
