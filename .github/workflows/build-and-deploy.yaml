@@ -39,14 +39,19 @@ jobs:
         tags:  ${{ env.image_base }}:${{ github.sha }}, ${{ env.image_base }}:${{ github.ref_name }}
 
   deploy:
+    env:
+      KUBECONFIG: '${{ github.workspace }}/.kube/main-kubeconfig'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@main
 
+      - name: Set Kubernetes Config
+        run: |
+          mkdir -p '${{ github.workspace }}/.kube'
+          echo "${{ secrets.KUBECONFIG }}" | base64 -d > $KUBECONFIG
+
       - name: Apply Helmfile
         uses: helmfile/helmfile-action@v1.7.0
-        env:
-          KUBECONFIG: ${{ secrets.KUBECONFIG }}
         with:
           helmfile-args: apply --namespace=${{ github.ref_name }} --selector name=crypto-ingress --set image.tag="${{ github.sha }}" --set influx.host="${{ secrets.influx_host }}" --set influx.token="${{ secrets.influx_token }}"
           helmfile-workdirectory: helm
