@@ -1,2 +1,8 @@
+namespace: production
+
 installed:
   postgres: true
+
+image:
+  repositoryBase: ghcr.io/mmaton/infrastructure
+  tag: latest
