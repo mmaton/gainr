@@ -88,5 +88,7 @@ releases:
   - name: crypto-ingress
     chart: ./crypto-ingress
     namespace: default
+    labels:
+      gainrService: true
     values:
       - {{.Values | toYaml | nindent 16}}

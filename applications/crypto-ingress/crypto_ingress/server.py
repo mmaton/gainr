@@ -15,6 +15,7 @@ async def message_callback(message):
     if message.get("channel") == "ohlc":
         candles = await format_influxdb_ohlc(message.get("data"))
         write_api.write(bucket="ohlc_1m", record=candles)
+        logger.debug(message.get("data"))
         logger.info(f"Wrote {len(candles)} candles")
 
 

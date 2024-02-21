@@ -5,12 +5,14 @@ from environs import Env
 
 env = Env()
 
+DEBUG = env.bool("DEBUG", False)
+
 # Logging
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG if DEBUG else logging.INFO)
 
 ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
+ch.setLevel(logging.DEBUG if DEBUG else logging.INFO)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 ch.setFormatter(formatter)
 logger.addHandler(ch)

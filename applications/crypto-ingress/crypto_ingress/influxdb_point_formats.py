@@ -9,7 +9,7 @@ async def format_influxdb_ohlc(data: List[dict]) -> List[Point]:
     influxdb_points = [
         (
             Point(f"{entry['symbol']}")
-            .time(datetime.fromisoformat(entry['timestamp'][:-1]), write_precision=WritePrecision.MS)
+            .time(datetime.fromisoformat(entry['interval_begin'][:-1]), write_precision=WritePrecision.NS)
             .field('open', entry['open'])
             .field('high', entry['high'])
             .field('low', entry['low'])

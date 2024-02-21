@@ -6,3 +6,8 @@ installed:
 image:
   repositoryBase: ghcr.io/mmaton/infrastructure
   tag: latest
+
+# Application specific values
+influx:
+  host: "http://influxdb-influxdb2.influxdb.svc.cluster.local"
+  token: "foo"
