@@ -6,7 +6,7 @@ import argparse
 from enum import Enum
 from textwrap import dedent
 
-import crypto_ingress.config
+from crypto_ingress import config
 from crypto_ingress.config import influxdb_client
 from influxdb_client.rest import ApiException
 from influxdb_client.domain.task_create_request import TaskCreateRequest

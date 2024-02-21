@@ -1,0 +1,27 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "crypto-ingress-cleanup"
+  labels:
+    app: crypto-ingress-cleanup
+  annotations:
+    "helm.sh/hook": pre-delete
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      name: "crypto-ingress-cleanup"
+      labels:
+        app: crypto-ingress-cleanup
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsUser: 0
+      containers:
+      - name: pre-upgrade-job
+        image: "{{ .Values.image.repositoryBase }}/crypto-ingress:{{ .Values.image.tag }}"
+        command: ["python3", "-m", "crypto_ingress.scripts.configure_buckets", "--action", "uninstall"]
+        env:
+          {{- include "crypto-ingress.env" . | nindent 12 }}

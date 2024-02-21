@@ -84,3 +84,9 @@ releases:
           tls: true
           hostname: influx.k3s.mmaton.com
           secretName: tls-influx-ingress
+
+  - name: crypto-ingress
+    chart: ./crypto-ingress
+    namespace: default
+    values:
+      - {{.Values | toYaml | nindent 16}}

@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: crypto-ingress
+spec:
+  selector:
+    matchLabels:
+      app: crypto-ingress
+  template:
+    metadata:
+      labels:
+        app: crypto-ingress
+    spec:
+      containers:
+        - name: crypto-ingress
+          image: "{{ .Values.image.repositoryBase }}/crypto-ingress:{{ .Values.image.tag }}"
+          command: ["python3", "-m", "crypto_ingress.server"]
+          env:
+            {{- include "crypto-ingress.env" . | nindent 12 }}
