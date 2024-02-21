@@ -1,5 +1,6 @@
 FROM python:3.12-bookworm
 
+ENV PYTHONUNBUFFERED=1
 RUN pip install poetry
 
 WORKDIR /app

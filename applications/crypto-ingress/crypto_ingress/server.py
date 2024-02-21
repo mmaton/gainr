@@ -2,7 +2,7 @@ import asyncio
 from influxdb_client.client.write_api import SYNCHRONOUS
 from kraken.spot import KrakenSpotWSClientV2
 
-from crypto_ingress.config import influxdb_client
+from crypto_ingress.config import influxdb_client, logger
 from crypto_ingress.influxdb_point_formats import format_influxdb_ohlc
 
 write_api = influxdb_client.write_api(write_options=SYNCHRONOUS)
@@ -15,9 +15,7 @@ async def message_callback(message):
     if message.get("channel") == "ohlc":
         candles = await format_influxdb_ohlc(message.get("data"))
         write_api.write(bucket="ohlc_1m", record=candles)
-        for candle in candles:
-            print(candle)
-        print(f"Wrote {len(candles)} candles")
+        logger.info(f"Wrote {len(candles)} candles")
 
 
 async def main():
