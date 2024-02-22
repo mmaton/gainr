@@ -3,6 +3,7 @@ local
 # Python
 **/*__pycache__
 **/*venv
+**/*.coverage
 
 # IDEs
 .idea
