@@ -11,6 +11,8 @@ repositories:
     url: https://traefik.github.io/charts
   - name: rancher-latest
     url: https://releases.rancher.com/server-charts/latest
+  - name: emqx
+    url: https://repos.emqx.io/charts
 
 environments:
   default:
@@ -84,6 +86,14 @@ releases:
           tls: true
           hostname: influx.k3s.mmaton.com
           secretName: tls-influx-ingress
+
+  - name: emqx-operator
+    chart: emqx/emqx-operator
+    namespace: emqx-operator-system
+
+  - name: emqx-mqtt
+    chart: ./emqx-mqtt
+    namespace: emqx-mqtt
 
   - name: crypto-ingress
     chart: ./crypto-ingress
