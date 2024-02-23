@@ -13,6 +13,8 @@ python = ">=3.11,<=3.14"
 influxdb-client = "^1.40.0"
 python-kraken-sdk = "^2.1.1"
 environs = "^10.3.0"
+paho-mqtt = "^2.0.0"
+tenacity = "^8.2.3"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0.1"

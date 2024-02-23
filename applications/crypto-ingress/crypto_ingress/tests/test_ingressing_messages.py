@@ -50,16 +50,16 @@ class TestCryptoIngress:
         }
         assert len(candles) == 1
 
-    async def test_message_callback_with_ohlc_data(self, ohlc_data):
+    async def test_message_callback_with_ohlc_data(self, ohlc_data, dummy_mqtt_client):
         message = {"channel": "ohlc", "data": ohlc_data}
         write_api = influxdb_client.write_api()
-        await message_callback(message)
+        await message_callback(dummy_mqtt_client, message)
         assert write_api.write.called
         call_kwargs = write_api.write.call_args.kwargs
         assert call_kwargs['bucket'] == "ohlc_1m"
         assert isinstance(call_kwargs['record'][0], Point)
         assert len(call_kwargs['record']) == 1
 
-    async def test_message_callback_with_ping(self):
-        call = await message_callback({"method": "pong"})
+    async def test_message_callback_with_ping(self, dummy_mqtt_client):
+        call = await message_callback(dummy_mqtt_client, {"method": "pong"})
         assert call is None

@@ -3,6 +3,8 @@
   value: {{ .Values.influx.host | quote }}
 - name: INFLUXDB_TOKEN
   value: {{ .Values.influx.token | quote }}
+- name: MQTT_PASSWORD
+  value: {{ .Values.cryptoIngress.mqtt.password | quote }}
 - name: DEBUG
   value: {{ .Values.cryptoIngress.debug | quote }}
 {{- end -}}

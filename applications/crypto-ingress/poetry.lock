@@ -297,6 +297,20 @@ files = [
 ]
 
 [[package]]
+name = "paho-mqtt"
+version = "2.0.0"
+description = "MQTT version 5.0/3.1.1 client class"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "paho_mqtt-2.0.0-py3-none-any.whl", hash = "sha256:2ef745073dfc9aa68bfec30d0b9b6f0304ea75182bae85a7c77a80cefce1eff5"},
+    {file = "paho_mqtt-2.0.0.tar.gz", hash = "sha256:13b205f29251e4f2c66a6c923c31fc4fd780561e03b2d775cff8e4f2915cf947"},
+]
+
+[package.extras]
+proxy = ["pysocks"]
+
+[[package]]
 name = "pluggy"
 version = "1.4.0"
 description = "plugin and hook calling mechanisms for python"
@@ -496,6 +510,20 @@ files = [
 ]
 
 [[package]]
+name = "tenacity"
+version = "8.2.3"
+description = "Retry code until it succeeds"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "tenacity-8.2.3-py3-none-any.whl", hash = "sha256:ce510e327a630c9e1beaf17d42e6ffacc88185044ad85cf74c0a8887c6a0f88c"},
+    {file = "tenacity-8.2.3.tar.gz", hash = "sha256:5398ef0d78e63f40007c1fb4c0bff96e1911394d2fa8d194f77619c05ff6cc8a"},
+]
+
+[package.extras]
+doc = ["reno", "sphinx", "tornado (>=4.5)"]
+
+[[package]]
 name = "typing-extensions"
 version = "4.9.0"
 description = "Backported and Experimental Type Hints for Python 3.8+"
@@ -607,4 +635,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<=3.14"
-content-hash = "16d065c8823342fbc08cb8d68e0a1ccc9b7df3b40504a0c3393469d34e3fe1f7"
+content-hash = "df2ca772a0e3bbf8f4888b9d2ff09e55716e0c04dfdc68d877941179923e863c"

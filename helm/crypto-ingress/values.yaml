@@ -1,2 +1,4 @@
 cryptoIngress:
   debug: true
+  mqtt:
+    password: "foo"

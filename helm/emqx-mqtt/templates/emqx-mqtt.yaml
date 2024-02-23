@@ -14,6 +14,7 @@ spec:
         accessModes:
           - ReadWriteOnce
       replicas: 2
+  # Expose listeners
   listenersServiceTemplate:
     spec:
       type: LoadBalancer
