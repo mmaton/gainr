@@ -25,16 +25,16 @@ class Action(Enum):
 
 def create_downsample_query(from_timeframe: str, to_timeframe: str):
     # https://community.influxdata.com/t/flux-multiple-aggregates/10221/8
+    # Offset by 5s to ensure we have the latest data
     flux = dedent(f'''
         import "date"
-        option task = {{name: "ohlc_downsample_{to_timeframe}", every: {to_timeframe}}}
+        option task = {{name: "ohlc_downsample_{to_timeframe}", every: {to_timeframe}, offset: 5s}}
         
         data = () =>  from(bucket: "ohlc_{from_timeframe}")
          |> range(
                 start: date.sub(d: {to_timeframe}, from: date.truncate(t: now(), unit: {to_timeframe})),
                 stop: date.truncate(t: now(), unit: {to_timeframe})
             )
-         |> filter(fn: (r) => r["_measurement"] == "BTC/EUR")
          |> sort(columns: ["_time"])
         
         aggregate = (tables=<-, filterFn, agg, name) =>
