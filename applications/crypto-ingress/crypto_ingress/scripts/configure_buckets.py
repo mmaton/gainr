@@ -28,7 +28,6 @@ class Action(Enum):
 
 def create_downsample_query(from_timeframe: str, to_timeframe: str, offset: int = 0):
     # https://community.influxdata.com/t/flux-multiple-aggregates/10221/8
-    # Offset by 5s to ensure we have the latest data
     flux = dedent(f'''
         import "date"
         option task = {{name: "ohlc_downsample_{to_timeframe}", every: {to_timeframe}, offset: {offset}s}}
@@ -92,6 +91,7 @@ def install():
                 find_task[0].flux = query.flux
                 influxdb_client.tasks_api().update_task(task=find_task[0])
                 config.logger.info(f"Updated downsample task ohlc_downsample_{tf}")
+            offset += 1
 
         last_tf = tf
 
