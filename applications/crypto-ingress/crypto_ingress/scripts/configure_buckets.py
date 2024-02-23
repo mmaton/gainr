@@ -80,7 +80,7 @@ def install():
 
         if last_tf:
             find_task = influxdb_client.tasks_api().find_tasks(name=f"ohlc_downsample_{tf}")
-            offset = offset_count * DOWNSAMPLE_OFFSET_MULTIPLIER
+            offset = DOWNSAMPLE_OFFSET_MULTIPLIER * offset_count
             query = create_downsample_query(from_timeframe=last_tf, to_timeframe=tf, offset=offset)
             if not find_task:
                 # Create task
@@ -91,7 +91,7 @@ def install():
                 find_task[0].flux = query.flux
                 influxdb_client.tasks_api().update_task(task=find_task[0])
                 config.logger.info(f"Updated downsample task ohlc_downsample_{tf}")
-            offset += 1
+            offset_count += 1
 
         last_tf = tf
 
