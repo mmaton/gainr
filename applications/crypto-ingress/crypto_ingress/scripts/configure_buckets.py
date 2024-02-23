@@ -13,6 +13,9 @@ from influxdb_client.domain.task_create_request import TaskCreateRequest
 
 
 TIMEFRAMES = ["1m", "5m", "15m", "1h", "4h", "1d", "1w"]
+# E.g 1*2 seconds after the 5th minute we run ohlc_downsample_5m,
+# then 2*2 seconds for ohlc_downsample_15m and so on.
+DOWNSAMPLE_OFFSET_MULTIPLIER = 2
 
 
 class Action(Enum):
@@ -23,12 +26,12 @@ class Action(Enum):
         return self.value
 
 
-def create_downsample_query(from_timeframe: str, to_timeframe: str):
+def create_downsample_query(from_timeframe: str, to_timeframe: str, offset: int = 0):
     # https://community.influxdata.com/t/flux-multiple-aggregates/10221/8
     # Offset by 5s to ensure we have the latest data
     flux = dedent(f'''
         import "date"
-        option task = {{name: "ohlc_downsample_{to_timeframe}", every: {to_timeframe}, offset: 5s}}
+        option task = {{name: "ohlc_downsample_{to_timeframe}", every: {to_timeframe}, offset: {offset}s}}
         
         data = () =>  from(bucket: "ohlc_{from_timeframe}")
          |> range(
@@ -64,6 +67,7 @@ def create_downsample_query(from_timeframe: str, to_timeframe: str):
 
 def install():
     last_tf = None
+    offset_count = 1
     for tf in TIMEFRAMES:
         try:
             influxdb_client.buckets_api().create_bucket(bucket_name=f"ohlc_{tf}")
@@ -77,7 +81,8 @@ def install():
 
         if last_tf:
             find_task = influxdb_client.tasks_api().find_tasks(name=f"ohlc_downsample_{tf}")
-            query = create_downsample_query(from_timeframe=last_tf, to_timeframe=tf)
+            offset = offset_count * DOWNSAMPLE_OFFSET_MULTIPLIER
+            query = create_downsample_query(from_timeframe=last_tf, to_timeframe=tf, offset=offset)
             if not find_task:
                 # Create task
                 influxdb_client.tasks_api().create_task(task_create_request=query)
