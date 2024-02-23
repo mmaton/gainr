@@ -26,17 +26,24 @@ class Action(Enum):
 def create_downsample_query(from_timeframe: str, to_timeframe: str):
     # https://community.influxdata.com/t/flux-multiple-aggregates/10221/8
     flux = dedent(f'''
+        import "date"
         option task = {{name: "ohlc_downsample_{to_timeframe}", every: {to_timeframe}}}
         
-        data = () => from(bucket: "ohlc_{from_timeframe}")
-          |> range(start: -{to_timeframe})
-
+        data = () =>  from(bucket: "ohlc_{from_timeframe}")
+         |> range(
+                start: date.sub(d: {to_timeframe}, from: date.truncate(t: now(), unit: {to_timeframe})),
+                stop: date.truncate(t: now(), unit: {to_timeframe})
+            )
+         |> filter(fn: (r) => r["_measurement"] == "BTC/EUR")
+         |> sort(columns: ["_time"])
+        
         aggregate = (tables=<-, filterFn, agg, name) =>
-            tables
-                |> filter(fn: filterFn)
-                |> aggregateWindow(every: {to_timeframe}, offset: {to_timeframe}, fn: agg)
-                |> set(key: "_field", value: name)
-
+                    tables
+                        |> filter(fn: filterFn)
+                        |> aggregateWindow(every: {to_timeframe}, fn: agg)
+                        |> set(key: "_field", value: name)
+                        |> duplicate(column: "_start", as: "_time")
+        
         union(
             tables: [
                 data() |> aggregate(filterFn: (r) => r._field == "open", agg: first, name: "open"),
@@ -47,7 +54,7 @@ def create_downsample_query(from_timeframe: str, to_timeframe: str):
                 data() |> aggregate(filterFn: (r) => r._field == "volume", agg: sum, name: "volume"),
             ],
         )
-          |> to(bucket: "ohlc_{to_timeframe}", org: "influxdata")
+        |> to(bucket: "ohlc_{to_timeframe}", org: "influxdata")
     ''')
     return TaskCreateRequest(
         org=config.INFLUXDB_ORG,
