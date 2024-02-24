@@ -10,6 +10,21 @@ config.influxdb_client = MagicMock(InfluxDBClient)
 mqtt.paho_client = MagicMock(mqtt_client)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function", autouse=True)
 def dummy_mqtt_client():
-    yield mqtt.connect_mqtt()
+    client = mqtt.connect_mqtt()
+    yield client
+    client.reset_mock()
+
+
+@pytest.fixture(scope="function", autouse=True)
+def dummy_influx_client():
+    client = config.influxdb_client
+    yield client
+    client.reset_mock()
+
+
+@pytest.fixture(scope="function", autouse=True)
+def reset_candle_tracker():
+    from crypto_ingress import server
+    server.candle_tracker = {}

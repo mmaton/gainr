@@ -9,7 +9,7 @@ def connect_mqtt():
     def on_connect(client, userdata, flags, reason_code, properties):
         print(f"Connected with result code {reason_code}")
 
-    def on_disconnect(client, userdata, rc):
+    def on_disconnect(client, userdata, rc, *args, **kwargs):
         logger.info("Disconnected with result code: %s", rc)
 
         @retry(wait=wait_random_exponential(multiplier=1, max=60))
