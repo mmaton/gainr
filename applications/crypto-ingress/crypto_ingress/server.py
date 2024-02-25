@@ -8,7 +8,7 @@ from functools import partial
 from influxdb_client.client.write_api import SYNCHRONOUS
 from kraken.spot import KrakenSpotWSClientV2
 
-from crypto_ingress.config import influxdb_client, logger, MQTT_OHLC_TOPIC_BASE
+from crypto_ingress.config import influxdb_client, logger, MQTT_OHLC_TOPIC_BASE, ENVIRONMENT
 from crypto_ingress.influxdb_point_formats import format_influxdb_ohlc
 from crypto_ingress.mqtt import connect_mqtt
 
@@ -70,7 +70,7 @@ async def message_callback(mqtt_client, message):
             mqtt_client.publish(MQTT_OHLC_TOPIC_BASE + f"/{candle.get('symbol')}", json.dumps(candle))
 
         candles = await format_influxdb_ohlc(infilled_candles)
-        write_api.write(bucket="ohlc_1m", record=candles)
+        write_api.write(bucket=f"{ENVIRONMENT}_ohlc_1m", record=candles)
         for candle in candles:
             logger.debug(candle)
         logger.info(f"Wrote {len(candles)} candles")

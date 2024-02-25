@@ -13,7 +13,7 @@ from pathlib import Path
 import asyncio
 from influxdb_client.client.write_api import SYNCHRONOUS
 
-from crypto_ingress.config import influxdb_client
+from crypto_ingress.config import influxdb_client, ENVIRONMENT
 from crypto_ingress.influxdb_point_formats import format_influxdb_ohlc
 
 
@@ -28,7 +28,7 @@ parser.add_argument('pair')
 
 def bulk_write_influxdb(client, data, interval: str):
     write_api = client.write_api(write_options=SYNCHRONOUS)
-    write_api.write(bucket=f"ohlc_{interval}", record=data)
+    write_api.write(bucket=f"{ENVIRONMENT}_ohlc_{interval}", record=data)
 
 
 async def main(csv_file_path: str, interval: int, pair: str):

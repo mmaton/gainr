@@ -7,6 +7,7 @@ import sentry_sdk
 env = Env()
 
 DEBUG = env.bool("DEBUG", False)
+ENVIRONMENT = env.str("ENVIRONMENT", "local")
 
 # Logging
 logger = logging.getLogger(__name__)
@@ -43,4 +44,4 @@ MQTT_CLIENT_ID = env.str("HOSTNAME", "unknown-host")
 MQTT_USERNAME = env.str("MQTT_USERNAME", "gainr-backend")
 MQTT_PASSWORD = env.str("MQTT_PASSWORD")
 
-MQTT_OHLC_TOPIC_BASE = "gainr/ohlc_1m"
+MQTT_OHLC_TOPIC_BASE = f"gainr/{ENVIRONMENT}/ohlc_1m"

@@ -7,7 +7,7 @@ from enum import Enum
 from textwrap import dedent
 
 from crypto_ingress import config
-from crypto_ingress.config import influxdb_client
+from crypto_ingress.config import influxdb_client, ENVIRONMENT
 from influxdb_client.rest import ApiException
 from influxdb_client.domain.task_create_request import TaskCreateRequest
 
@@ -16,6 +16,7 @@ TIMEFRAMES = ["1m", "5m", "15m", "1h", "4h", "1d", "1w"]
 # E.g 1*2 seconds after the 5th minute we run ohlc_downsample_5m,
 # then 2*2 seconds for ohlc_downsample_15m and so on.
 DOWNSAMPLE_OFFSET_MULTIPLIER = 2
+env = ENVIRONMENT
 
 
 class Action(Enum):
@@ -30,9 +31,9 @@ def create_downsample_query(from_timeframe: str, to_timeframe: str, offset: int 
     # https://community.influxdata.com/t/flux-multiple-aggregates/10221/8
     flux = dedent(f'''
         import "date"
-        option task = {{name: "ohlc_downsample_{to_timeframe}", every: {to_timeframe}, offset: {offset}s}}
+        option task = {{name: "{env}_ohlc_downsample_{to_timeframe}", every: {to_timeframe}, offset: {offset}s}}
         
-        data = () =>  from(bucket: "ohlc_{from_timeframe}")
+        data = () =>  from(bucket: "{env}_ohlc_{from_timeframe}")
          |> range(
                 start: date.sub(d: {to_timeframe}, from: date.truncate(t: now(), unit: {to_timeframe})),
                 stop: date.truncate(t: now(), unit: {to_timeframe})
@@ -56,7 +57,7 @@ def create_downsample_query(from_timeframe: str, to_timeframe: str, offset: int 
                 data() |> aggregate(filterFn: (r) => r._field == "volume", agg: sum, name: "volume"),
             ],
         )
-        |> to(bucket: "ohlc_{to_timeframe}", org: "influxdata")
+        |> to(bucket: "{env}_ohlc_{to_timeframe}", org: "influxdata")
     ''')
     return TaskCreateRequest(
         org=config.INFLUXDB_ORG,
@@ -69,28 +70,28 @@ def install():
     offset_count = 1
     for tf in TIMEFRAMES:
         try:
-            influxdb_client.buckets_api().create_bucket(bucket_name=f"ohlc_{tf}")
-            config.logger.info(f"Created bucket ohlc_{tf}")
+            influxdb_client.buckets_api().create_bucket(bucket_name=f"{env}_ohlc_{tf}")
+            config.logger.info(f"Created bucket {env}_ohlc_{tf}")
         except ApiException as e:
-            if f"bucket with name ohlc_{tf} already exists" in e.message:
+            if f"bucket with name {env}_ohlc_{tf} already exists" in e.message:
                 pass
-                config.logger.info(f"Not creating bucket ohlc_{tf}, it already exists!")
+                config.logger.info(f"Not creating bucket {env}_ohlc_{tf}, it already exists!")
             else:
                 raise e
 
         if last_tf:
-            find_task = influxdb_client.tasks_api().find_tasks(name=f"ohlc_downsample_{tf}")
+            find_task = influxdb_client.tasks_api().find_tasks(name=f"{env}_ohlc_downsample_{tf}")
             offset = DOWNSAMPLE_OFFSET_MULTIPLIER * offset_count
             query = create_downsample_query(from_timeframe=last_tf, to_timeframe=tf, offset=offset)
             if not find_task:
                 # Create task
                 influxdb_client.tasks_api().create_task(task_create_request=query)
-                config.logger.info(f"Created downsample task ohlc_downsample_{tf}")
+                config.logger.info(f"Created downsample task {env}_ohlc_downsample_{tf}")
             else:
                 # Update
                 find_task[0].flux = query.flux
                 influxdb_client.tasks_api().update_task(task=find_task[0])
-                config.logger.info(f"Updated downsample task ohlc_downsample_{tf}")
+                config.logger.info(f"Updated downsample task {env}_ohlc_downsample_{tf}")
             offset_count += 1
 
         last_tf = tf
@@ -99,19 +100,19 @@ def install():
 def uninstall():
     last_tf = None
     for tf in TIMEFRAMES:
-        find_bucket = influxdb_client.buckets_api().find_bucket_by_name(bucket_name=f"ohlc_{tf}")
+        find_bucket = influxdb_client.buckets_api().find_bucket_by_name(bucket_name=f"{env}_ohlc_{tf}")
         if find_bucket:
             influxdb_client.buckets_api().delete_bucket(bucket=find_bucket)
-            config.logger.info(f"Deleted bucket ohlc_{tf}")
+            config.logger.info(f"Deleted bucket {env}_ohlc_{tf}")
         else:
-            config.logger.info(f"Not deleting bucket ohlc_{tf}, it doesn't exist!")
+            config.logger.info(f"Not deleting bucket {env}_ohlc_{tf}, it doesn't exist!")
 
         if last_tf:
-            find_task = influxdb_client.tasks_api().find_tasks(name=f"ohlc_downsample_{tf}")
+            find_task = influxdb_client.tasks_api().find_tasks(name=f"{env}_ohlc_downsample_{tf}")
             if find_task:
                 # Delete
                 influxdb_client.tasks_api().delete_task(task_id=find_task[0].id)
-                config.logger.info(f"Deleted downsample task ohlc_downsample_{tf}")
+                config.logger.info(f"Deleted downsample task {env}_ohlc_downsample_{tf}")
 
         last_tf = tf
 

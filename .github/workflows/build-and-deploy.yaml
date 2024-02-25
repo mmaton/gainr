@@ -57,6 +57,7 @@ jobs:
           helmfile-args: > 
             apply --namespace=${{ github.ref_name }} 
             --selector name=crypto-ingress 
+            --set environment=${{ github.ref_name }} 
             --set image.tag="${{ github.sha }}" 
             --set influx.host="${{ secrets.influx_host }}" 
             --set influx.token="${{ secrets.influx_token }}" 
