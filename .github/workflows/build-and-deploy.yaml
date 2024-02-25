@@ -54,7 +54,14 @@ jobs:
       - name: Apply Helmfile
         uses: helmfile/helmfile-action@v1.7.0
         with:
-          helmfile-args: apply --namespace=${{ github.ref_name }} --selector name=crypto-ingress --set image.tag="${{ github.sha }}" --set influx.host="${{ secrets.influx_host }}" --set influx.token="${{ secrets.influx_token }}" --set cryptoIngress.mqtt.password="${{ secrets.mqtt_password }}"
+          helmfile-args: > 
+            apply --namespace=${{ github.ref_name }} 
+            --selector name=crypto-ingress 
+            --set image.tag="${{ github.sha }}" 
+            --set influx.host="${{ secrets.influx_host }}" 
+            --set influx.token="${{ secrets.influx_token }}" 
+            --set cryptoIngress.mqtt.password="${{ secrets.mqtt_password }}"
+            --set cryptoIngress.monitoring.sentryDSN="${{ secrets.sentry_dsn }}"
           helmfile-workdirectory: helm
           helm-plugins: >
             https://github.com/databus23/helm-diff,

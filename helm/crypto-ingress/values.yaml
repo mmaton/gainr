@@ -2,3 +2,5 @@ cryptoIngress:
   debug: true
   mqtt:
     password: "foo"
+  monitoring:
+    sentryDSN: ""

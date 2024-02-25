@@ -7,4 +7,6 @@
   value: {{ .Values.cryptoIngress.mqtt.password | quote }}
 - name: DEBUG
   value: {{ .Values.cryptoIngress.debug | quote }}
+- name: SENTRY_DSN
+  value: {{ .Values.cryptoIngress.monitoring.sentryDSN | default "" }}
 {{- end -}}
