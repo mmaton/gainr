@@ -10,7 +10,7 @@ spec:
         storageClassName: longhorn
         resources:
           requests:
-            storage: 20Mi
+            storage: 3Gi
         accessModes:
           - ReadWriteOnce
       replicas: 2
