@@ -5,7 +5,7 @@ from typing import List, Optional, AsyncGenerator, Annotated
 
 import strawberry
 
-from crypto_ingress.config import ENVIRONMENT
+from telesys.config import ENVIRONMENT
 from telesys.enums import Interval
 from telesys.influx_queries import get_candles_for_tf, get_mins_for_tf
 from telesys.mqtt import connect_mqtt

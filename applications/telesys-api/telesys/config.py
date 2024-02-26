@@ -7,6 +7,7 @@ from environs import Env
 env = Env()
 
 DEBUG = env.bool("DEBUG", False)
+ENVIRONMENT = env.str("ENVIRONMENT", "local")
 
 # Logging
 logger = logging.getLogger(__name__)
@@ -32,3 +33,4 @@ MQTT_PORT = 1883
 MQTT_CLIENT_ID = env.str("HOSTNAME", f"unknown-host{randint(100, 200)}")
 MQTT_USERNAME = env.str("MQTT_USERNAME", "gainr-backend")
 MQTT_PASSWORD = env.str("MQTT_PASSWORD")
+

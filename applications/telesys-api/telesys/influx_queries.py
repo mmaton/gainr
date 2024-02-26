@@ -1,8 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from crypto_ingress.config import ENVIRONMENT
-from telesys.config import influxdb_client
+from telesys.config import influxdb_client, ENVIRONMENT
 from telesys.enums import Interval
 
 
