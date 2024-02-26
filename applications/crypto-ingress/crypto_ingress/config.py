@@ -1,8 +1,9 @@
 import logging
 
+import sentry_sdk
 from environs import Env
 from influxdb_client import InfluxDBClient
-import sentry_sdk
+from influxdb_client.client.write_api import SYNCHRONOUS
 
 env = Env()
 
@@ -36,6 +37,7 @@ INFLUXDB_ORG = 'influxdata'
 
 # InfluxDB connection
 influxdb_client = InfluxDBClient(url=INFLUXDB_HOST, token=INFLUXDB_TOKEN, org=INFLUXDB_ORG)
+write_api = influxdb_client.write_api(write_options=SYNCHRONOUS)
 
 # MQTT
 MQTT_BROKER = env.str("MQTT_BROKER", "emqx-listeners.emqx-mqtt.svc.cluster.local")
