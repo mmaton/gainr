@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: telesys-api
+spec:
+  selector:
+    matchLabels:
+      app: telesys-api
+  template:
+    metadata:
+      labels:
+        app: telesys-api
+    spec:
+      containers:
+        - name: telesys-api
+          image: "{{ .Values.image.repositoryBase }}/telesys-api:{{ .Values.image.tag }}"
+          command: ["uvicorn", "telesys.server:app", "--host", "0.0.0.0"]
+          env:
+            {{- include "telesys-api.env" . | nindent 12 }}

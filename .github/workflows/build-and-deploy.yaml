@@ -9,6 +9,9 @@ on:
 
 jobs:
   build-and-publish-latest:
+    strategy:
+      matrix:
+        image: [crypto-ingress, telesys-api]
     runs-on: ubuntu-latest
 
     steps:
@@ -30,9 +33,9 @@ jobs:
     - name: Build and publish "latest" Docker image
       uses: docker/build-push-action@v5
       env:
-        image_base: ghcr.io/mmaton/infrastructure/crypto-ingress
+        image_base: ghcr.io/mmaton/infrastructure/${{ matrix.image }}
       with:
-        context: applications/crypto-ingress
+        context: applications/${{ matrix.image }}
         cache-from: type=registry,ref=${{ env.image_base }}:${{ github.ref_name }}
         platforms: linux/amd64,linux/arm64
         push: true
@@ -56,12 +59,12 @@ jobs:
         with:
           helmfile-args: > 
             apply --namespace=${{ github.ref_name }} 
-            --selector name=crypto-ingress 
+            --selector gainrService=true
             --set environment=${{ github.ref_name }} 
             --set image.tag="${{ github.sha }}" 
             --set influx.host="${{ secrets.influx_host }}" 
             --set influx.token="${{ secrets.influx_token }}" 
-            --set cryptoIngress.mqtt.password="${{ secrets.mqtt_password }}"
+            --set mqtt.password="${{ secrets.mqtt_password }}"
             --set cryptoIngress.monitoring.sentryDSN="${{ secrets.sentry_dsn }}"
           helmfile-workdirectory: helm
           helm-plugins: >

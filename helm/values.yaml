@@ -12,3 +12,6 @@ image:
 influx:
   host: "http://influxdb-influxdb2.influxdb.svc.cluster.local"
   token: "foo"
+
+mqtt:
+  password: "foo"

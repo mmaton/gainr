@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "telesys"
+version = "0.1.0"
+description = ""
+authors = ["Max Maton <me@mmaton.com>"]
+readme = "README.md"
+
+[virtualenvs]
+in-project = true
+
+[tool.poetry.dependencies]
+python = "^3.11"
+strawberry-graphql = {extras = ["debug-server"], version = "^0.219.2"}
+environs = "^10.3.0"
+influxdb-client = {extras = ["async"], version = "^1.40.0"}
+paho-mqtt = "^2.0.0"
+tenacity = "^8.2.3"
+uvicorn = {extras = ["standard"], version = "^0.27.1"}
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

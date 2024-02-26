@@ -102,3 +102,11 @@ releases:
       gainrService: true
     values:
       - {{.Values | toYaml | nindent 16}}
+
+  - name: telesys-api
+    chart: ./telesys-api
+    namespace: default
+    labels:
+      gainrService: true
+    values:
+      - {{.Values | toYaml | nindent 16}}

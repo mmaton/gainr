@@ -1,4 +1,4 @@
-{{- define "crypto-ingress.env" -}}
+{{- define "telesys-api.env" -}}
 - name: ENVIRONMENT
   value: {{ .Values.environment | quote }}
 - name: INFLUXDB_HOST
@@ -8,7 +8,5 @@
 - name: MQTT_PASSWORD
   value: {{ .Values.mqtt.password | quote }}
 - name: DEBUG
-  value: {{ .Values.cryptoIngress.debug | quote }}
-- name: SENTRY_DSN
-  value: {{ .Values.cryptoIngress.monitoring.sentryDSN | default "" }}
+  value: {{ .Values.telesysAPI.debug | quote }}
 {{- end -}}
