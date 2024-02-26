@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
+from crypto_ingress.config import ENVIRONMENT
 from telesys.config import influxdb_client
 from telesys.enums import Interval
 
@@ -25,7 +26,7 @@ async def get_candles_for_tf(
 ):
     query_api = influxdb_client.query_api()
     records = query_api.query_stream(f"""
-        from(bucket: "local_ohlc_{interval.value}")
+        from(bucket: "{ENVIRONMENT}_ohlc_{interval.value}")
             |> range(start: {since.isoformat()}Z, stop: now())
             |> filter(fn: (r) => r["_measurement"] == "{symbol}")
             |> sort(columns: ["_time"])

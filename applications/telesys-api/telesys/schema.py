@@ -5,6 +5,7 @@ from typing import List, Optional, AsyncGenerator, Annotated
 
 import strawberry
 
+from crypto_ingress.config import ENVIRONMENT
 from telesys.enums import Interval
 from telesys.influx_queries import get_candles_for_tf, get_mins_for_tf
 from telesys.mqtt import connect_mqtt
@@ -107,12 +108,12 @@ class Subscription:
         mqtt_client = connect_mqtt()
         mqtt_client.on_message = on_message
         mqtt_client.loop_start()
-        mqtt_client.subscribe(f"gainr/local/ohlc_{interval.value}/{symbol}")
+        mqtt_client.subscribe(f"gainr/{ENVIRONMENT}/ohlc_{interval.value}/{symbol}")
         try:
             while True:
                 yield await candles.get()
                 await asyncio.sleep(0.05)
         except asyncio.CancelledError:
             print("Cancelled")
-            mqtt_client.unsubscribe(f"gainr/local/ohlc_{interval.value}/{symbol}")
+            mqtt_client.unsubscribe(f"gainr/{ENVIRONMENT}/ohlc_{interval.value}/{symbol}")
             mqtt_client.loop_stop()
