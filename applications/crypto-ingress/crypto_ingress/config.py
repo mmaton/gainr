@@ -44,4 +44,4 @@ MQTT_CLIENT_ID = env.str("HOSTNAME", "unknown-host")
 MQTT_USERNAME = env.str("MQTT_USERNAME", "gainr-backend")
 MQTT_PASSWORD = env.str("MQTT_PASSWORD")
 
-MQTT_OHLC_TOPIC_BASE = f"gainr/{ENVIRONMENT}/ohlc_1m"
+MQTT_OHLC_TOPIC_BASE = f"gainr/{ENVIRONMENT}"

@@ -34,6 +34,8 @@
         - Infill missing `1m` timeframe data, for example if there are no trades in the last minute, this is because
           the kraken WSS API will not send any candles if there are no trades
         - Update the latest `5m`, `15m`, `1h`, `4h`, `1d`, or `1w` and `1w` candle
+        - Look at every symbol's `1m`, `5m`, `15m`, `1h`, `4h`, `1d`, and `1w` latest candle
+          - If the current time (UTC) is > the latest candle's `timestamp` then we need to 
 
 
 TODO: Diagram of ingress process, real documentation
