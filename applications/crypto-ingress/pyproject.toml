@@ -10,7 +10,7 @@ in-project = true
 
 [tool.poetry.dependencies]
 python = ">=3.11,<=3.14"
-influxdb-client = "^1.40.0"
+influxdb-client = {extras = ["async"], version = "^1.40.0"}
 python-kraken-sdk = "^2.1.1"
 environs = "^10.3.0"
 paho-mqtt = "^2.0.0"
