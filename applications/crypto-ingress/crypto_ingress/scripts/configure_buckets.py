@@ -6,12 +6,11 @@ import argparse
 from enum import Enum
 
 import asyncio
+from influxdb_client import InfluxDBClient
 
 from crypto_ingress import config
-from crypto_ingress.config import ENVIRONMENT
+from crypto_ingress.config import ENVIRONMENT, INFLUXDB_HOST, INFLUXDB_TOKEN, INFLUXDB_ORG
 from influxdb_client.rest import ApiException
-
-from crypto_ingress.influxdb import InfluxClient
 
 TIMEFRAMES = ["1m", "5m", "15m", "1h", "4h", "1d", "1w"]
 # E.g 1*2 seconds after the 5th minute we run ohlc_downsample_5m,
@@ -31,6 +30,7 @@ class Action(Enum):
 def install(influx_client):
     for tf in TIMEFRAMES:
         try:
+
             influx_client.buckets_api().create_bucket(bucket_name=f"{env}_ohlc_{tf}")
             config.logger.info(f"Created bucket {env}_ohlc_{tf}")
         except ApiException as e:
@@ -56,11 +56,11 @@ async def main():
     parser.add_argument("-a", "--action", type=Action, default=Action.INSTALL)
     args = parser.parse_args()
 
-    async with InfluxClient() as influx_client:
-        if args.action == Action.INSTALL:
-            install(influx_client)
-        else:
-            uninstall(influx_client)
+    influx_client = InfluxDBClient(url=INFLUXDB_HOST, token=INFLUXDB_TOKEN, org=INFLUXDB_ORG)
+    if args.action == Action.INSTALL:
+        install(influx_client)
+    else:
+        uninstall(influx_client)
 
 
 if __name__ == "__main__":
