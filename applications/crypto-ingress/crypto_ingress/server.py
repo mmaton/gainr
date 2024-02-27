@@ -8,7 +8,7 @@ from crypto_ingress.candle_tracker import (
     create_or_update_1m_candle_and_aggregate_up,
     populate_candle_tracker_data
 )
-from crypto_ingress.config import logger, SYMBOLS_TO_WATCH, KRAKEN_SECRET, KRAKEN_KEY
+from crypto_ingress.config import logger, SYMBOLS_TO_WATCH
 from crypto_ingress.influxdb import InfluxClient
 from crypto_ingress.kraken import get_secret_kwargs
 from crypto_ingress.mqtt import connect_mqtt

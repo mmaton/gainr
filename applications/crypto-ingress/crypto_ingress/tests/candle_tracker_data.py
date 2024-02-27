@@ -1,9 +1,11 @@
+# flake8: noqa E501
+
 from collections import deque
 
 mock_candle_tracker_data = {
     'BTC/EUR': {
         '1m': deque(maxlen=5, iterable=[
-            {'interval_begin': '2024-02-27T15:45:00.000000000Z', 'symbol': 'BTC/EUR', 'open': 52564.6, 'high': 52605.9,'low': 52561.5, 'close': 52582.1, 'volume': 0.15886208, 'trades': 14, 'timestamp': '2024-02-27T15:46:00.000000Z'},
+            {'interval_begin': '2024-02-27T15:45:00.000000000Z', 'symbol': 'BTC/EUR', 'open': 52564.6, 'high': 52605.9, 'low': 52561.5, 'close': 52582.1, 'volume': 0.15886208, 'trades': 14, 'timestamp': '2024-02-27T15:46:00.000000Z'},
             {'interval_begin': '2024-02-27T15:46:00.000000000Z', 'symbol': 'BTC/EUR', 'open': 52582.1, 'high': 52582.1, 'low': 52560.3, 'close': 52560.3, 'volume': 2.51024945, 'trades': 29, 'timestamp': '2024-02-27T15:47:00.000000Z'},
             {'interval_begin': '2024-02-27T15:47:00.000000000Z', 'symbol': 'BTC/EUR', 'open': 52560.4, 'high': 52560.4, 'low': 52484.2, 'close': 52486.3, 'volume': 2.31040103, 'trades': 39, 'timestamp': '2024-02-27T15:48:00.000000Z'},
             {'interval_begin': '2024-02-27T15:48:00.000000000Z', 'symbol': 'BTC/EUR', 'open': 52477.6, 'high': 52477.6, 'low': 52427.0, 'close': 52427.0, 'volume': 0.85255308, 'trades': 45, 'timestamp': '2024-02-27T15:49:00.000000Z'},

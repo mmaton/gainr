@@ -2,7 +2,7 @@
 - name: ENVIRONMENT
   value: {{ .Values.environment | quote }}
 - name: INFLUXDB_HOST
-  value: {{ .Values.influx.host | quote }}
+  value: {{ .Values.influx.host }}
 - name: INFLUXDB_TOKEN
   value: {{ .Values.influx.token | quote }}
 - name: MQTT_PASSWORD

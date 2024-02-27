@@ -8,11 +8,45 @@ on:
     branches: ["*"]
 
 jobs:
-  build-and-publish-latest:
+  test:
+    strategy:
+      matrix:
+        image: [crypto-ingress]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@main
+
+      - run: pipx install poetry
+      - run: cd applications/${{ matrix.image }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'poetry'
+
+      - run: poetry install
+        working-directory: ./applications/${{ matrix.image }}
+
+      - name: pytest
+        run: poetry run python -m pytest
+        working-directory: ./applications/${{ matrix.image }}
+
+
+      - name: flake8
+        run: poetry run python -m flake8
+        working-directory: ./applications/${{ matrix.image }}
+
+      - name: mypy
+        run: poetry run python -m mypy .
+        working-directory: ./applications/${{ matrix.image }}
+
+  build:
     strategy:
       matrix:
         image: [crypto-ingress, telesys-api]
     runs-on: ubuntu-latest
+    needs: test
 
     steps:
     - uses: actions/checkout@main
@@ -45,7 +79,7 @@ jobs:
     env:
       KUBECONFIG: '${{ github.workspace }}/.kube/main-kubeconfig'
     runs-on: ubuntu-latest
-    needs: build-and-publish-latest
+    needs: build
     steps:
       - uses: actions/checkout@main
 
