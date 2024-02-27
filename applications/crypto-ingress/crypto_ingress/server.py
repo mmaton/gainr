@@ -3,8 +3,10 @@ from datetime import datetime, timedelta
 
 from kraken.spot import KrakenSpotWSClientV2
 
+from crypto_ingress import config
 from crypto_ingress.candle_tracker import candle_tracker, aggregate_1m_candles_up, populate_candle_tracker_data
-from crypto_ingress.config import logger
+from crypto_ingress.config import logger, SYMBOLS_TO_WATCH
+from crypto_ingress.influxdb import InfluxClient
 from crypto_ingress.mqtt import connect_mqtt
 
 candle_queue = asyncio.Queue()
@@ -44,10 +46,10 @@ async def ohlc_1m_candle_creator():
         await asyncio.sleep((in_one_minute - datetime.now()).total_seconds())
 
 
-async def candle_handler(mqtt_client):
+async def candle_handler(mqtt_client, write_api):
     while True:
         candle = await candle_queue.get()
-        await aggregate_1m_candles_up(candle, mqtt_client)
+        await aggregate_1m_candles_up(candle, mqtt_client, write_api)
 
 
 async def kraken_subscription(symbols):
@@ -65,19 +67,20 @@ async def kraken_subscription(symbols):
 
 
 async def main():
-    symbols_to_watch = ["BTC/EUR", "XRP/EUR"]
-    await populate_candle_tracker_data(symbols=symbols_to_watch)
+    async with InfluxClient() as influx_client:
+        write_api = influx_client.write_api()
+        await populate_candle_tracker_data(symbols=SYMBOLS_TO_WATCH, write_api=write_api)
 
-    mqtt_client = connect_mqtt()
-    mqtt_client.loop_start()
+        mqtt_client = connect_mqtt()
+        mqtt_client.loop_start()
 
-    await asyncio.gather(
-        kraken_subscription(symbols_to_watch),
-        ohlc_1m_candle_creator(),
-        candle_handler(mqtt_client)
-    )
+        await asyncio.gather(
+            kraken_subscription(SYMBOLS_TO_WATCH),
+            ohlc_1m_candle_creator(),
+            candle_handler(mqtt_client, write_api)
+        )
 
-    mqtt_client.loop_stop()
+        mqtt_client.loop_stop()
 
 
 if __name__ == "__main__":

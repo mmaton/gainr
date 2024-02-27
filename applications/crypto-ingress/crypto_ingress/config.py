@@ -2,8 +2,7 @@ import logging
 
 import sentry_sdk
 from environs import Env
-from influxdb_client import InfluxDBClient
-from influxdb_client.client.write_api import SYNCHRONOUS
+
 
 env = Env()
 
@@ -35,10 +34,6 @@ INFLUXDB_HOST = env.str('INFLUXDB_HOST')
 INFLUXDB_TOKEN = env.str('INFLUXDB_TOKEN')
 INFLUXDB_ORG = 'influxdata'
 
-# InfluxDB connection
-influxdb_client = InfluxDBClient(url=INFLUXDB_HOST, token=INFLUXDB_TOKEN, org=INFLUXDB_ORG)
-write_api = influxdb_client.write_api(write_options=SYNCHRONOUS)
-
 # MQTT
 MQTT_BROKER = env.str("MQTT_BROKER", "emqx-listeners.emqx-mqtt.svc.cluster.local")
 MQTT_PORT = 1883
@@ -47,3 +42,9 @@ MQTT_USERNAME = env.str("MQTT_USERNAME", "gainr-backend")
 MQTT_PASSWORD = env.str("MQTT_PASSWORD")
 
 MQTT_OHLC_TOPIC_BASE = f"gainr/{ENVIRONMENT}"
+
+# Kraken - Trading
+KRAKEN_KEY = env.str("KRAKEN_KEY", "")
+KRAKEN_SECRET = env.str("KRAKEN_SECRET", "")
+OHLC_INTERVALS = [(1, "1m"), (5, "5m"), (15, "15m"), (60, "1h"), (240, "4h"), (1440, "1d"), (10080, "1w")]
+SYMBOLS_TO_WATCH = ["BTC/EUR", "XRP/EUR"]

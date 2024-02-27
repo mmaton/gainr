@@ -4,10 +4,10 @@ from datetime import datetime, timedelta
 from typing import Deque, List
 
 import tenacity
-from kraken.spot import Market
 
-from crypto_ingress.config import logger, MQTT_OHLC_TOPIC_BASE, write_api, ENVIRONMENT
-from crypto_ingress.influxdb_point_formats import format_influxdb_ohlc
+from crypto_ingress.config import logger, MQTT_OHLC_TOPIC_BASE, ENVIRONMENT, OHLC_INTERVALS
+from crypto_ingress.influxdb_point_formats import format_influxdb_ohlc, ohlc_to_dict
+from crypto_ingress.kraken import KrakenMarket
 
 candle_tracker: dict[str, dict[int: Deque[dict]]] = defaultdict(dict)
 
@@ -65,7 +65,7 @@ def aggregate_up(symbol: str, from_tf: str, to_tf: str):
         }
 
 
-async def aggregate_1m_candles_up(candle: dict, mqtt_client) -> None:
+async def aggregate_1m_candles_up(candle: dict, mqtt_client, write_api) -> None:
     new_candles: dict[str, List[dict]] = defaultdict(list)  # timeframe: [candles]
 
     symbol = candle["symbol"]
@@ -122,21 +122,20 @@ async def aggregate_1m_candles_up(candle: dict, mqtt_client) -> None:
                 json.dumps(candle)
             )
         points = await format_influxdb_ohlc(candles)
-        write_api.write(bucket=f"{ENVIRONMENT}_ohlc_{timeframe}", record=points)
+        await write_api.write(bucket=f"{ENVIRONMENT}_ohlc_{timeframe}", record=points)
     logger.info(f"Wrote candles for each timeframe")
 
 
-async def populate_candle_tracker_data(symbols) -> None:
-    market_client = Market()
-    intervals = [(1, "1m"), (5, "5m"), (15, "15m"), (60, "1h"), (240, "4h"), (1440, "1d"), (10080, "1w")]
+async def populate_candle_tracker_data(symbols, write_api) -> None:
+    market_client = KrakenMarket()
     started_at = datetime.now()
 
     for symbol in symbols:
-        for interval_idx, (interval, interval_friendly) in enumerate(intervals):
+        for interval_idx, (interval, interval_friendly) in enumerate(OHLC_INTERVALS):
             logger.info(f"Populating {symbol} {interval_friendly}")
-            if interval_idx < len(intervals) - 1:
-                next_interval = intervals[interval_idx + 1][0]
-                num_candles = intervals[interval_idx + 1][0] // interval
+            if interval_idx < len(OHLC_INTERVALS) - 1:
+                next_interval = OHLC_INTERVALS[interval_idx + 1][0]
+                num_candles = OHLC_INTERVALS[interval_idx + 1][0] // interval
             else:
                 next_interval = interval
                 num_candles = 1
@@ -155,23 +154,10 @@ async def populate_candle_tracker_data(symbols) -> None:
                     interval=interval,
                     since=int((started_at - timedelta(minutes=next_interval)).timestamp())
                 )
-            candles = get_candles()
-
-            # Reformat the data to resemble websocket candles
-            for candle in candles[symbol]:
-                interval_begin = datetime.fromtimestamp(candle[0])
-                candle_tracker[symbol][interval_friendly].append({
-                    "interval_begin": interval_begin.isoformat() + '.000000000Z',
-                    "symbol": symbol,
-                    "open": float(candle[1]),
-                    "high": float(candle[2]),
-                    "low": float(candle[3]),
-                    "close": float(candle[4]),
-                    "volume": float(candle[6]),
-                    "trades": candle[7],
-                    "timestamp": (interval_begin + timedelta(minutes=interval)).isoformat() + '.000000Z',
-                })
+            candles = get_candles()[symbol]
+            for candle in await ohlc_to_dict(candles, symbol, interval):
+                candle_tracker[symbol][interval_friendly].append(candle)
 
             points = await format_influxdb_ohlc(candle_tracker[symbol][interval_friendly])
             # Keeps influx up to date in case of any downtime
-            write_api.write(bucket=f"{ENVIRONMENT}_ohlc_{interval_friendly}", record=points)
+            await write_api.write(bucket=f"{ENVIRONMENT}_ohlc_{interval_friendly}", record=points)

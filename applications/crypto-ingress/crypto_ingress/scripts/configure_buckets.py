@@ -4,13 +4,14 @@ Create OHLC bucket:
 """
 import argparse
 from enum import Enum
-from textwrap import dedent
+
+import asyncio
 
 from crypto_ingress import config
-from crypto_ingress.config import influxdb_client, ENVIRONMENT
+from crypto_ingress.config import ENVIRONMENT
 from influxdb_client.rest import ApiException
-from influxdb_client.domain.task_create_request import TaskCreateRequest
 
+from crypto_ingress.influxdb import InfluxClient
 
 TIMEFRAMES = ["1m", "5m", "15m", "1h", "4h", "1d", "1w"]
 # E.g 1*2 seconds after the 5th minute we run ohlc_downsample_5m,
@@ -27,10 +28,10 @@ class Action(Enum):
         return self.value
 
 
-def install():
+def install(influx_client):
     for tf in TIMEFRAMES:
         try:
-            influxdb_client.buckets_api().create_bucket(bucket_name=f"{env}_ohlc_{tf}")
+            influx_client.buckets_api().create_bucket(bucket_name=f"{env}_ohlc_{tf}")
             config.logger.info(f"Created bucket {env}_ohlc_{tf}")
         except ApiException as e:
             if f"bucket with name {env}_ohlc_{tf} already exists" in e.message:
@@ -40,22 +41,27 @@ def install():
                 raise e
 
 
-def uninstall():
+def uninstall(influx_client):
     for tf in TIMEFRAMES:
-        find_bucket = influxdb_client.buckets_api().find_bucket_by_name(bucket_name=f"{env}_ohlc_{tf}")
+        find_bucket = influx_client.buckets_api().find_bucket_by_name(bucket_name=f"{env}_ohlc_{tf}")
         if find_bucket:
-            influxdb_client.buckets_api().delete_bucket(bucket=find_bucket)
+            influx_client.buckets_api().delete_bucket(bucket=find_bucket)
             config.logger.info(f"Deleted bucket {env}_ohlc_{tf}")
         else:
             config.logger.info(f"Not deleting bucket {env}_ohlc_{tf}, it doesn't exist!")
 
 
-if __name__ == "__main__":
+async def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-a", "--action", type=Action, default=Action.INSTALL)
     args = parser.parse_args()
 
-    if args.action == Action.INSTALL:
-        install()
-    else:
-        uninstall()
+    async with InfluxClient() as influx_client:
+        if args.action == Action.INSTALL:
+            install(influx_client)
+        else:
+            uninstall(influx_client)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
