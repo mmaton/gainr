@@ -65,6 +65,8 @@ jobs:
             --set influx.host="${{ secrets.influx_host }}" 
             --set influx.token="${{ secrets.influx_token }}" 
             --set mqtt.password="${{ secrets.mqtt_password }}"
+            --set kraken.key="${{ secrets.kraken_key }}"
+            --set kraken.secret="${{ secrets.kraken_secret }}"
             --set cryptoIngress.monitoring.sentryDSN="${{ secrets.sentry_dsn }}"
           helmfile-workdirectory: helm
           helm-plugins: >

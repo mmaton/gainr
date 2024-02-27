@@ -2,3 +2,7 @@ cryptoIngress:
   debug: true
   monitoring:
     sentryDSN: ""
+
+kraken:
+  key: ""
+  secret: ""

@@ -1,11 +1,16 @@
-import asyncio
 from datetime import datetime, timedelta
 
+import asyncio
 from kraken.spot import KrakenSpotWSClientV2
 
-from crypto_ingress.candle_tracker import candle_tracker, create_or_update_1m_candle_and_aggregate_up, populate_candle_tracker_data
-from crypto_ingress.config import logger, SYMBOLS_TO_WATCH
+from crypto_ingress.candle_tracker import (
+    candle_tracker,
+    create_or_update_1m_candle_and_aggregate_up,
+    populate_candle_tracker_data
+)
+from crypto_ingress.config import logger, SYMBOLS_TO_WATCH, KRAKEN_SECRET, KRAKEN_KEY
 from crypto_ingress.influxdb import InfluxClient
+from crypto_ingress.kraken import get_secret_kwargs
 from crypto_ingress.mqtt import connect_mqtt
 
 candle_queue: asyncio.Queue[int] = asyncio.Queue()
@@ -52,7 +57,10 @@ async def candle_handler(mqtt_client, write_api):
 
 
 async def kraken_subscription(symbols):
-    ws_client = KrakenSpotWSClientV2(callback=message_callback)
+    ws_client = KrakenSpotWSClientV2(
+        callback=message_callback,
+        **get_secret_kwargs(),
+    )
     await ws_client.subscribe(
         params={
             "channel": "ohlc",
