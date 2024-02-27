@@ -3,6 +3,7 @@ from collections import defaultdict, deque
 from datetime import datetime, timedelta
 from typing import Deque, List
 
+import tenacity
 from kraken.spot import Market
 
 from crypto_ingress.config import logger, MQTT_OHLC_TOPIC_BASE, write_api, ENVIRONMENT
@@ -142,11 +143,20 @@ async def populate_candle_tracker_data(symbols) -> None:
 
             # Use a deque to ensure we only have the required number of candles stored to build up larger timeframes
             candle_tracker[symbol][interval_friendly] = deque(maxlen=num_candles)
-            candles = market_client.get_ohlc(
-                pair=symbol,
-                interval=interval,
-                since=int((started_at - timedelta(minutes=next_interval)).timestamp())
+
+            @tenacity.retry(
+                wait=tenacity.wait_random_exponential(multiplier=1, max=60),
+                stop=tenacity.stop_after_delay(60),
+                reraise=True,
             )
+            def get_candles():
+                return market_client.get_ohlc(
+                    pair=symbol,
+                    interval=interval,
+                    since=int((started_at - timedelta(minutes=next_interval)).timestamp())
+                )
+            candles = get_candles()
+
             # Reformat the data to resemble websocket candles
             for candle in candles[symbol]:
                 interval_begin = datetime.fromtimestamp(candle[0])
