@@ -9,7 +9,7 @@ from crypto_ingress.config import logger, MQTT_OHLC_TOPIC_BASE, ENVIRONMENT, OHL
 from crypto_ingress.influxdb_point_formats import format_influxdb_ohlc, ohlc_to_dict
 from crypto_ingress.kraken import KrakenMarket
 
-candle_tracker: dict[str, dict[int: Deque[dict]]] = defaultdict(dict)
+candle_tracker: dict[str, dict[str, Deque[dict]]] = defaultdict(dict)
 
 
 def get_minutes_for_timeframe(timeframe: str) -> int:
@@ -95,7 +95,7 @@ async def aggregate_1m_candles_up(candle: dict, mqtt_client, write_api) -> None:
             "timestamp": candle["timestamp"],
             "open": float(candle["open"]),
             "high": float(candle["high"]),
-            "low":float(candle["low"]),
+            "low": float(candle["low"]),
             "close": float(candle["close"]),
             "volume": float(candle["volume"]),
             "trades": int(candle["trades"]),
@@ -123,7 +123,7 @@ async def aggregate_1m_candles_up(candle: dict, mqtt_client, write_api) -> None:
             )
         points = await format_influxdb_ohlc(candles)
         await write_api.write(bucket=f"{ENVIRONMENT}_ohlc_{timeframe}", record=points)
-    logger.info(f"Wrote candles for each timeframe")
+    logger.info("Wrote candles for each timeframe")
 
 
 async def populate_candle_tracker_data(symbols, write_api) -> None:

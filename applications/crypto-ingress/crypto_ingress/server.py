@@ -3,13 +3,12 @@ from datetime import datetime, timedelta
 
 from kraken.spot import KrakenSpotWSClientV2
 
-from crypto_ingress import config
 from crypto_ingress.candle_tracker import candle_tracker, aggregate_1m_candles_up, populate_candle_tracker_data
 from crypto_ingress.config import logger, SYMBOLS_TO_WATCH
 from crypto_ingress.influxdb import InfluxClient
 from crypto_ingress.mqtt import connect_mqtt
 
-candle_queue = asyncio.Queue()
+candle_queue: asyncio.Queue[int] = asyncio.Queue()
 
 
 async def message_callback(message):

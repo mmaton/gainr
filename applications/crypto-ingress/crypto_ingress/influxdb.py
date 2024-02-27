@@ -10,3 +10,9 @@ class InfluxClient:
         if not cls._instance:
             cls._instance = InfluxDBClientAsync(url=INFLUXDB_HOST, token=INFLUXDB_TOKEN, org=INFLUXDB_ORG)
         return cls._instance
+
+    def __enter__(self):
+        ...
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        ...

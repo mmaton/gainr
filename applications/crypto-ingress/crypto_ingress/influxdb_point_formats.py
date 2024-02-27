@@ -1,10 +1,10 @@
 from datetime import datetime, timedelta
-from typing import List
+from typing import List, Iterable
 from influxdb_client import Point
 from influxdb_client.client.write_api import WritePrecision
 
 
-async def format_influxdb_ohlc(data: List[dict]) -> List[Point]:
+async def format_influxdb_ohlc(data: Iterable[dict]) -> List[Point]:
     influxdb_points = [
         (
             Point(f"{entry['symbol']}")

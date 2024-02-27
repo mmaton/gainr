@@ -4,8 +4,6 @@ USAGE:
 e.g:
     poetry run python crypto_ingress/scripts/bulk_index_into_influxdb.py ../../data/XRPEUR_1.csv 1m XRP/EUR
 """
-
-
 import argparse
 from datetime import datetime
 from pathlib import Path
@@ -26,42 +24,50 @@ parser.add_argument('interval')
 parser.add_argument('pair')
 
 
-async def main(csv_file_path: str, interval: int, pair: str):
+async def main(csv_file_path: str, interval: int, pair: str, write_api):
     chunk_size = 500
 
     path = Path(csv_file_path)
 
-    async with InfluxClient() as influx_client:
-        write_api = influx_client.write_api()
-        with path.open(mode='r') as csv_file:
-            while True:
-                chunk = [next(csv_file, None) for _ in range(chunk_size)]
-                if chunk[-1] is None:
-                    chunk = list(filter(None, chunk))
-                if not chunk:
-                    break  # Reached the end of the file
+    with path.open(mode='r') as csv_file:
+        while True:
+            chunk = []
+            for _ in range(chunk_size):
+                try:
+                    chunk.append(next(csv_file))
+                except StopIteration:
+                    break
 
-                data = []
-                for row in chunk:
-                    row = row.rstrip('\n').split(',')
-                    data.append({
-                        'timestamp': datetime.fromtimestamp(int(row[0])).isoformat() + "Z",
-                        'open': float(row[1]),
-                        'high': float(row[2]),
-                        'low': float(row[3]),
-                        'close': float(row[4]),
-                        'volume': float(row[5]),
-                        'trades': int(row[6]),
-                        'interval': interval,
-                        'symbol': pair,
+            data = []
+            for row in chunk:
+                ohlc = row.rstrip('\n').split(',')
+                data.append({
+                    'timestamp': datetime.fromtimestamp(int(ohlc[0])).isoformat() + "Z",
+                    'open': float(ohlc[1]),
+                    'high': float(ohlc[2]),
+                    'low': float(ohlc[3]),
+                    'close': float(ohlc[4]),
+                    'volume': float(ohlc[5]),
+                    'trades': int(ohlc[6]),
+                    'interval': interval,
+                    'symbol': pair,
 
-                    })
+                })
 
-                influxdb_points = await format_influxdb_ohlc(data)
-                await write_api.write(bucket=f"{ENVIRONMENT}_ohlc_{interval}", record=influxdb_points)
-                print(f"Wrote {len(chunk)} candles from {data[0]['timestamp']} to {data[-1]['timestamp']}")
+            influxdb_points = await format_influxdb_ohlc(data)
+            await write_api.write(bucket=f"{ENVIRONMENT}_ohlc_{interval}", record=influxdb_points)
+            print(f"Wrote {len(chunk)} candles from {data[0]['timestamp']} to {data[-1]['timestamp']}")
 
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    asyncio.run(main(csv_file_path=args.csv_file_path, interval=args.interval, pair=args.pair))
+    with InfluxClient() as influx_client:
+        write_api = influx_client.write_api()
+        asyncio.run(
+            main(
+                csv_file_path=args.csv_file_path,
+                interval=args.interval,
+                pair=args.pair,
+                write_api=write_api
+            )
+        )

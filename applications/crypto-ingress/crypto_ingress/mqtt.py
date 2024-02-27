@@ -29,4 +29,3 @@ def connect_mqtt():
     client.on_disconnect = on_disconnect
     client.connect(MQTT_BROKER, MQTT_PORT)
     return client
-
