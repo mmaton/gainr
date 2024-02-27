@@ -13,4 +13,3 @@ app = GraphQL(
         GRAPHQL_WS_PROTOCOL,
     ],
 )
-

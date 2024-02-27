@@ -91,7 +91,6 @@ class Subscription:
         # Callback when a message is received from MQTT
         def on_message(client, userdata, msg):
             payload = json.loads(msg.payload)
-            print("message")
             candles.put_nowait(
                 OHLCData(
                     begin=datetime.fromisoformat(payload["interval_begin"][:-1]).replace(tzinfo=timezone.utc),

@@ -1,7 +1,7 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: emqx-dashboard
+  name: telesys-api
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: "web, websecure"
     traefik.ingress.kubernetes.io/router.tls: "true"
@@ -10,17 +10,17 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-  - host: mqtt.k3s.mmaton.com
+  - host: telesys.k3s.mmaton.com
     http:
       paths:
       - backend:
           service:
-            name: emqx-dashboard
+            name: telesys-api
             port:
-              number: 18083
+              number: 80
         path: /
         pathType: Prefix
   tls:
   - hosts:
-    - mqtt.k3s.mmaton.com
-    secretName: tls-emqx-dashboard-ingress
+    - telesys.k3s.mmaton.com
+    secretName: tls-telesys-api-ingress
