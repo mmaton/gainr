@@ -65,7 +65,14 @@ def aggregate_up(symbol: str, from_tf: str, to_tf: str):
         }
 
 
-async def aggregate_1m_candles_up(candle: dict, mqtt_client, write_api) -> None:
+async def create_or_update_1m_candle_and_aggregate_up(candle: dict, mqtt_client, write_api) -> None:
+    """
+    Creates or updates the latest 1m candlestick and then propagates up and publishes all modified timeframes
+
+    Does not create 0 volume candlesticks if we already have one from the Kraken Websocket. This is so that the
+    scheduled 0 volume candlestick creator which runs at the beginning of every minute will schedule a new OHLC
+    candlestick for every TF at least once a minute, keeping charts and algos updated.
+    """
     new_candles: dict[str, List[dict]] = defaultdict(list)  # timeframe: [candles]
 
     symbol = candle["symbol"]
@@ -107,8 +114,8 @@ async def aggregate_1m_candles_up(candle: dict, mqtt_client, write_api) -> None:
     from_tf = "1m"
     logger.debug(f"New candle for {symbol} {from_tf}: {candle_tracker[symbol][from_tf][-1]}")
 
-    # Aggregate up this new data to higher timeframes
-    for to_tf in ["5m", "15m", "1h", "4h", "1d", "1w"]:
+    # Aggregate up this new data to higher timeframes (5m, 15m, ... 1w)
+    for _, to_tf in OHLC_INTERVALS[1:]:
         aggregate_up(symbol, from_tf, to_tf)
         from_tf = to_tf
         new_candles[to_tf].append(candle_tracker[symbol][to_tf][-1])

@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 
 from kraken.spot import KrakenSpotWSClientV2
 
-from crypto_ingress.candle_tracker import candle_tracker, aggregate_1m_candles_up, populate_candle_tracker_data
+from crypto_ingress.candle_tracker import candle_tracker, create_or_update_1m_candle_and_aggregate_up, populate_candle_tracker_data
 from crypto_ingress.config import logger, SYMBOLS_TO_WATCH
 from crypto_ingress.influxdb import InfluxClient
 from crypto_ingress.mqtt import connect_mqtt
@@ -48,7 +48,7 @@ async def ohlc_1m_candle_creator():
 async def candle_handler(mqtt_client, write_api):
     while True:
         candle = await candle_queue.get()
-        await aggregate_1m_candles_up(candle, mqtt_client, write_api)
+        await create_or_update_1m_candle_and_aggregate_up(candle, mqtt_client, write_api)
 
 
 async def kraken_subscription(symbols):

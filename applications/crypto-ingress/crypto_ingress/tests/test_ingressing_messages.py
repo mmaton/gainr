@@ -1,12 +1,11 @@
-from copy import deepcopy
 from datetime import datetime, timedelta
 
 import pytest
-from influxdb_client import Point
 
-from crypto_ingress.config import influxdb_client, ENVIRONMENT
+from crypto_ingress.candle_tracker import aggregate_up, create_or_update_1m_candle_and_aggregate_up
+from crypto_ingress.config import OHLC_INTERVALS
 from crypto_ingress.influxdb_point_formats import format_influxdb_ohlc
-from crypto_ingress.server import message_callback, infill_missing_candles
+from crypto_ingress.server import message_callback, candle_queue
 
 
 class TestCryptoIngress:
@@ -51,66 +50,82 @@ class TestCryptoIngress:
         }
         assert len(candles) == 1
 
-    async def test_message_callback_with_ohlc_data(self, ohlc_data, dummy_mqtt_client):
-        message = {"channel": "ohlc", "data": ohlc_data}
-        write_api = influxdb_client.write_api()
-        await message_callback(dummy_mqtt_client, message)
-        assert write_api.write.called
-        call_kwargs = write_api.write.call_args.kwargs
-        assert call_kwargs['bucket'] == f"{ENVIRONMENT}_ohlc_1m"
-        assert isinstance(call_kwargs['record'][0], Point)
-        assert len(call_kwargs['record']) == 1
+    async def test_message_callback_with_ohlc_data(self, ohlc_data):
+        await message_callback({"channel": "ohlc", "data": ohlc_data})
+        assert candle_queue.qsize() == 1
 
-    async def test_message_callback_with_ping(self, dummy_mqtt_client):
-        call = await message_callback(dummy_mqtt_client, {"method": "pong"})
-        assert call is None
+    async def test_message_callback_with_ping_does_nothing(self, reset_candle_queue):
+        await message_callback({"method": "pong"})
+        assert candle_queue.qsize() == 0
 
-    async def test_infill_missing_candles(self, ohlc_data):
-        ohlc_data.append(deepcopy(ohlc_data[0]))
-        ohlc_data[1]["interval_begin"] = "2024-02-22T09:45:00.000000000Z"
+    async def test_aggregating_up_latest_1m_candlestick_to_5m(self, mock_candle_tracker):
+        mock_candle_tracker["BTC/EUR"]["1m"][-1]["volume"] += 10
+        previous_5m_volume = mock_candle_tracker["BTC/EUR"]["5m"][-1]["volume"]
+        aggregate_up(symbol="BTC/EUR", from_tf="1m", to_tf="5m")
 
-        infill = await infill_missing_candles(ohlc_data)
-        assert len(infill) == 4
-        assert infill[1]["interval_begin"] == "2024-02-22T09:43:00.000000000Z"
-        assert infill[2]["interval_begin"] == "2024-02-22T09:44:00.000000000Z"
+        assert mock_candle_tracker["BTC/EUR"]["5m"][-1]["volume"] == previous_5m_volume + 10
 
-    async def test_infill_missing_candles_does_not_create_extra_unnecessary_candles(self, ohlc_data):
-        infill = await infill_missing_candles(ohlc_data)
-        assert len(infill) == 1
+    async def test_aggregating_up_on_new_1m_candle_creates_new_5m_candle(self, mock_candle_tracker):
+        last_1m_candle = mock_candle_tracker["BTC/EUR"]["1m"][-1]
+        last_5m_candle = mock_candle_tracker["BTC/EUR"]["5m"][-1]
+        curr_interval_begin = datetime.fromisoformat(last_1m_candle["interval_begin"][:-1])
 
-    async def test_infill_missing_candles_saves_last_candle_between_calls(self, ohlc_data):
-        infill = await infill_missing_candles(ohlc_data)
-        assert len(infill) == 1
+        mock_candle_tracker["BTC/EUR"]["1m"].append({
+            "symbol": "BTC/EUR",
+            "interval_begin": (curr_interval_begin + timedelta(minutes=1)).isoformat() + '.000000000Z',
+            "timestamp": (curr_interval_begin + timedelta(minutes=2)).isoformat() + '.000000Z',
+            "open": last_1m_candle["close"],
+            "high": last_1m_candle["high"],
+            "low": last_1m_candle["low"],
+            "close": last_1m_candle["close"],
+            "volume": float(0),
+            "trades": 0,
+        })
+        aggregate_up(symbol="BTC/EUR", from_tf="1m", to_tf="5m")
 
-        for i in range(3, 6):
-            data_after = deepcopy(ohlc_data)
-            data_after[0]["interval_begin"] = f"2024-02-22T09:4{i}:00.000000000Z"
-            infill = await infill_missing_candles(data_after)
-            assert len(infill) == 1
+        assert mock_candle_tracker["BTC/EUR"]["5m"][-1] != last_5m_candle
+        assert mock_candle_tracker["BTC/EUR"]["5m"][-2] == last_5m_candle
 
-    async def test_infilling_missing_candles_on_receiving_previous_and_next_candles(self, ohlc_data, dummy_mqtt_client):
-        data_before = ohlc_data
-        data_after = deepcopy(ohlc_data)
-        data_after[0]["interval_begin"] = "2024-02-22T09:45:00.000000000Z"
-        write_api = influxdb_client.write_api()
-        await message_callback(dummy_mqtt_client, {"channel": "ohlc", "data": data_before})
-        await message_callback(dummy_mqtt_client, {"channel": "ohlc", "data": data_after})
+        last_5m_begin_interval = datetime.fromisoformat(last_5m_candle["interval_begin"][:-1])
+        new_5m_begin_interval = datetime.fromisoformat(mock_candle_tracker["BTC/EUR"]["5m"][-1]["interval_begin"][:-1])
+        assert new_5m_begin_interval == last_5m_begin_interval + timedelta(minutes=5)
 
-        second_write_points = write_api.write.call_args_list[1][1]['record']
-        start_timestamp = datetime.fromisoformat(data_before[0]["interval_begin"][:-1])
+    async def test_pushing_empty_candle_for_same_begin_interval_does_not_create_new_candle_and_agg_up(
+            self,
+            mock_candle_tracker,
+            mock_mqtt_client,
+            mock_influx_client,
+    ):
+        new_candle = mock_candle_tracker["BTC/EUR"]["1m"][-1] | {"volume": float(0), "trades": 0}
 
-        for i in range(1, 4):
-            expected_interval_begin = start_timestamp + timedelta(minutes=i)
-            assert second_write_points[i - 1]._time == expected_interval_begin
+        await create_or_update_1m_candle_and_aggregate_up(new_candle, mock_mqtt_client, mock_influx_client.write_api())
+        assert mock_candle_tracker["BTC/EUR"]["1m"][-1]["volume"] != 0.0
 
-        assert dummy_mqtt_client.publish.call_count == 4
+    async def test_pushing_new_0_volume_candle_for_next_tf_aggregates_data_up(
+            self,
+            mock_candle_tracker,
+            mock_mqtt_client,
+            mock_influx_client
+    ):
+        write_api = mock_influx_client.write_api()
+        last_1m_candle = mock_candle_tracker["BTC/EUR"]["1m"][-1]
+        curr_interval_begin = datetime.fromisoformat(last_1m_candle["interval_begin"][:-1])
 
-    async def test_infill_on_first_candle_does_nothing(self, ohlc_data):
-        infilled_candles = await infill_missing_candles(ohlc_data)
-        assert len(infilled_candles) == 1
+        new_candle = {
+            "symbol": "BTC/EUR",
+            "interval_begin": (curr_interval_begin + timedelta(minutes=1)).isoformat() + '.000000000Z',
+            "timestamp": (curr_interval_begin + timedelta(minutes=2)).isoformat() + '.000000Z',
+            "open": last_1m_candle["close"],
+            "high": last_1m_candle["high"],
+            "low": last_1m_candle["low"],
+            "close": last_1m_candle["close"],
+            "volume": float(0),
+            "trades": 0,
+        }
+        await create_or_update_1m_candle_and_aggregate_up(new_candle, mock_mqtt_client, write_api)
+        assert len(write_api.write.call_args_list) == len(OHLC_INTERVALS)
 
-    async def test_infill_does_not_add_candles_on_multiple_candles_within_same_begin_interval(self, ohlc_data):
-        for i in range(5):
-            ohlc_data[0]["trades"] = i
-            infilled_candles = await infill_missing_candles(ohlc_data)
-            assert len(infilled_candles) == 1
+        for call_idx, (_, tf) in enumerate(OHLC_INTERVALS):
+            call_as_dict = write_api.write.call_args_list[call_idx][1]
+            assert call_as_dict["bucket"] == f"local_ohlc_{tf}"
+            assert len(call_as_dict["record"]) == 1
