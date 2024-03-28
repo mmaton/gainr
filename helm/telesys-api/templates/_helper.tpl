@@ -9,4 +9,6 @@
   value: {{ .Values.mqtt.password | quote }}
 - name: DEBUG
   value: {{ .Values.telesysAPI.debug | quote }}
+- name: SENTRY_DSN
+  value: {{ .Values.telesysAPI.monitoring.sentryDSN | quote }}
 {{- end -}}

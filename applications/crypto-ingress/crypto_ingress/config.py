@@ -21,7 +21,7 @@ logger.addHandler(ch)
 
 if env.str("SENTRY_DSN", ""):
     sentry_sdk.init(
-        dsn="https://47ca2931367402cbb606d89f0096d517@o4506804531625984.ingest.sentry.io/4506804537065472",
+        dsn=env.str("SENTRY_DSN"),
         # Set traces_sample_rate to 1.0 to capture 100% of transactions for performance monitoring.
         traces_sample_rate=1.0,
         # Set profiles_sample_rate to 1.0 to profile 100% of sampled transactions.

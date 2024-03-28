@@ -101,7 +101,8 @@ jobs:
             --set mqtt.password="${{ secrets.mqtt_password }}"
             --set kraken.key="${{ secrets.kraken_key }}"
             --set kraken.secret="${{ secrets.kraken_secret }}"
-            --set cryptoIngress.monitoring.sentryDSN="${{ secrets.sentry_dsn }}"
+            --set cryptoIngress.monitoring.sentryDSN="${{ secrets.crypto_ingress_sentry_dsn }}"
+            --set telesysAPI.monitoring.sentryDSN="${{ secrets.telesys_sentry_dsn }}"
           helmfile-workdirectory: helm
           helm-plugins: >
             https://github.com/databus23/helm-diff,

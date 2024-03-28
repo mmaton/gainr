@@ -1,10 +1,21 @@
 import logging
 from random import randint
 
+import sentry_sdk
 from influxdb_client import InfluxDBClient
 from environs import Env
 
 env = Env()
+
+if env.str("SENTRY_DSN", ""):
+    sentry_sdk.init(
+        dsn=env.str("SENTRY_DSN"),
+        # Set traces_sample_rate to 1.0 to capture 100% of transactions for performance monitoring.
+        traces_sample_rate=1.0,
+        # Set profiles_sample_rate to 1.0 to profile 100% of sampled transactions.
+        # We recommend adjusting this value in production.
+        profiles_sample_rate=0.05,
+    )
 
 DEBUG = env.bool("DEBUG", False)
 ENVIRONMENT = env.str("ENVIRONMENT", "local")
