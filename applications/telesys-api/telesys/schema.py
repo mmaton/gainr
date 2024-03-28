@@ -7,7 +7,7 @@ import strawberry
 
 from telesys.config import ENVIRONMENT
 from telesys.enums import Interval
-from telesys.influx_queries import get_candles_for_tf, get_mins_for_tf
+from telesys.influx_queries import get_candles_for_tf, get_mins_for_tf, validate_symbol
 from telesys.mqtt import connect_mqtt
 
 
@@ -71,6 +71,8 @@ class Subscription:
                 strawberry.argument(description="Defaults to start at 5x `interval`"),
             ] = None,
     ) -> AsyncGenerator[OHLCData, None]:
+        validate_symbol(symbol)
+
         candles = asyncio.Queue()
         since = datetime.now() - timedelta(minutes=5 * get_mins_for_tf(interval.value)) if not since else since
 

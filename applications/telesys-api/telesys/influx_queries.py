@@ -5,6 +5,25 @@ from telesys.config import influxdb_client, ENVIRONMENT
 from telesys.enums import Interval
 
 
+def validate_symbol(symbol: str):
+    """
+    Raise exception if influx has no data by that symbol name or the symbol has no "/"
+    """
+    if "/" not in symbol:
+        raise Exception("Symbol is missing a / separator between currency pairs!")
+
+    query_api = influxdb_client.query_api()
+    count = query_api.query(f"""
+        from(bucket: "{ENVIRONMENT}_ohlc_1m")
+            |> range(start: -10y)
+            |> filter(fn: (r) => r["_measurement"] == "{symbol}")
+            |> limit(n: 1)
+            |> count()
+    """)
+    if not count:
+        raise Exception("No data for that symbol!")
+
+
 def get_mins_for_tf(timeframe: str) -> int:
     timeframe_to_minutes = {
         "1m": 1,

@@ -13,3 +13,7 @@ app = GraphQL(
         GRAPHQL_WS_PROTOCOL,
     ],
 )
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app)
