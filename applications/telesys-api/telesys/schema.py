@@ -113,7 +113,6 @@ class Subscription:
         try:
             while True:
                 yield await candles.get()
-                await asyncio.sleep(0.05)
         except asyncio.CancelledError:
             print("Cancelled")
             mqtt_client.unsubscribe(f"gainr/{ENVIRONMENT}/ohlc_{interval.value}/{symbol}")
