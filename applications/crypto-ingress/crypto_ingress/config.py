@@ -47,4 +47,4 @@ MQTT_OHLC_TOPIC_BASE = f"gainr/{ENVIRONMENT}"
 KRAKEN_KEY = env.str("KRAKEN_KEY", "")
 KRAKEN_SECRET = env.str("KRAKEN_SECRET", "")
 OHLC_INTERVALS = [(1, "1m"), (5, "5m"), (15, "15m"), (60, "1h"), (240, "4h"), (1440, "1d"), (10080, "1w")]
-SYMBOLS_TO_WATCH = ["BTC/EUR", "XRP/EUR"]
+SYMBOLS_TO_WATCH = ["BTC/EUR", "XRP/EUR", "SOL/EUR", "ADA/EUR"]
