@@ -96,7 +96,6 @@ jobs:
             --selector gainrService=true
             --set environment=${{ github.ref_name }} 
             --set image.tag="${{ github.sha }}" 
-            --set influx.host="${{ secrets.influx_host }}" 
             --set influx.token="${{ secrets.influx_token }}" 
             --set mqtt.password="${{ secrets.mqtt_password }}"
             --set kraken.key="${{ secrets.kraken_key }}"

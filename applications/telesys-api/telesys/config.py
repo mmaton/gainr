@@ -32,8 +32,6 @@ logger.addHandler(ch)
 
 # InfluxDB settings
 INFLUXDB_HOST = env.str('INFLUXDB_HOST')
-INFLUXDB_HOST = "http://" if not INFLUXDB_HOST.startswith("http://") else INFLUXDB_HOST
-
 INFLUXDB_TOKEN = env.str('INFLUXDB_TOKEN')
 INFLUXDB_ORG = 'influxdata'
 
