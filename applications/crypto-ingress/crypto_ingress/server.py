@@ -17,6 +17,7 @@ candle_queue: asyncio.Queue[int] = asyncio.Queue()
 
 
 async def message_callback(message):
+    logger.debug(message)
     if message.get("method") == "pong" or message.get("channel") == "heartbeat":
         return
 
